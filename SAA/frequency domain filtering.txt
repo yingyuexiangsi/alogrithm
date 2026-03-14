@@ -1,0 +1,142 @@
+import numpy as np
+from scipy.fft import fft, ifft
+import matplotlib.pyplot as plt
+
+def FrequencyDomainDiagram(x, y, cutoff_freq=None):
+    """
+    绘制信号的时域和频域图，并可选择进行频域滤波
+    
+    参数:
+        x: 时域信号的时间轴
+        y: 时域信号的幅值
+        cutoff_freq: 低通滤波的截止频率(Hz)，如果不指定则不进行滤波
+    
+    返回:
+        如果进行滤波:
+            half_x: 单边频率轴
+            half_abs_y: 单边幅度谱
+            filtered_y: 滤波后的时域信号
+        否则:
+            half_x: 单边频率轴
+            half_abs_y: 单边幅度谱
+    """
+    N = len(x)
+    T = x[1] - x[0]  # 采样间隔
+    Fs = 1 / T        # 采样频率
+    
+    # 快速傅里叶变换
+    fft_y = fft(y)
+    
+    # 频率轴
+    freqs = np.linspace(0, Fs, N, endpoint=False)
+    half_N = N // 2
+    half_freqs = freqs[:half_N]
+    
+    # 幅度谱
+    abs_y = np.abs(fft_y)
+    half_abs_y = abs_y[:,:half_N]
+    
+    # 相位谱
+    angle_y = np.angle(fft_y)
+
+    # 时域图
+    plt.figure(1,dpi=600)
+    plt.plot(x, y.transpose())
+    plt.title('Time Domain')
+    plt.xlabel('Wavelength (nm)',weight='bold')#*****************************************************************
+    plt.ylabel('DOD',weight='bold')#*****************************************************************
+    plt.legend(frameon=False)#*****************************************************************
+    #设置坐标轴的粗细
+    ax=plt.gca();#获得坐标轴的句柄#*****************************************************************
+    ax.spines['bottom'].set_linewidth(2);###设置底部坐标轴的粗细
+    ax.spines['left'].set_linewidth(2);####设置左边坐标轴的粗细
+    ax.spines['right'].set_linewidth(2);###设置右边坐标轴的粗细
+    ax.spines['top'].set_linewidth(2);####设置上部坐标轴的粗细
+    
+    # 频域图(双边)
+    plt.figure(2,dpi=600)
+    plt.plot(freqs, abs_y.transpose())
+    plt.title('Two-Sided Amplitude Spectrum')
+    plt.xlabel('Frequency [Hz]',weight='bold')
+    plt.ylabel('Magnitude',weight='bold')#*****************************************************************
+    plt.legend(frameon=False)#*****************************************************************
+    #设置坐标轴的粗细
+    ax=plt.gca();#获得坐标轴的句柄#*****************************************************************
+    ax.spines['bottom'].set_linewidth(2);###设置底部坐标轴的粗细
+    ax.spines['left'].set_linewidth(2);####设置左边坐标轴的粗细
+    ax.spines['right'].set_linewidth(2);###设置右边坐标轴的粗细
+    ax.spines['top'].set_linewidth(2);####设置上部坐标轴的粗细
+    
+    # 频域图(单边)
+    plt.figure(3,dpi=600)
+    plt.plot(half_freqs, half_abs_y.transpose())
+    plt.title('One-Sided Amplitude Spectrum')
+    plt.xlabel('Frequency [Hz]',weight='bold')
+    plt.ylabel('Magnitude',weight='bold')#*****************************************************************
+    plt.legend(frameon=False)#*****************************************************************
+    #设置坐标轴的粗细
+    ax=plt.gca();#获得坐标轴的句柄#*****************************************************************
+    ax.spines['bottom'].set_linewidth(2);###设置底部坐标轴的粗细
+    ax.spines['left'].set_linewidth(2);####设置左边坐标轴的粗细
+    ax.spines['right'].set_linewidth(2);###设置右边坐标轴的粗细
+    ax.spines['top'].set_linewidth(2);####设置上部坐标轴的粗细
+    
+    filtered_y = None
+    
+    # 如果指定了截止频率，进行低通滤波
+    if cutoff_freq is not None:
+        # 创建滤波器
+        filter_mask = np.zeros(N)
+        idx = int(cutoff_freq * N / Fs)
+        filter_mask[:idx] = 1
+        filter_mask[-idx:] = 1  # 处理负频率部分
+        
+        # 应用滤波器
+        filtered_fft = fft_y * filter_mask
+        
+        # 计算滤波后的幅度谱
+        filtered_abs_y = np.abs(filtered_fft)
+        half_filtered_abs_y = filtered_abs_y[:,:half_N]
+        
+        # 逆变换得到滤波后的时域信号
+        filtered_y = np.real(ifft(filtered_fft))
+        
+        # 绘制滤波后的频域图
+        plt.figure(5,dpi=600)
+        plt.plot(half_freqs, half_filtered_abs_y.transpose())
+        plt.title('Filtered Amplitude Spectrum')
+        plt.xlabel('Frequency [Hz]',weight='bold')
+        plt.ylabel('Magnitude',weight='bold')#*****************************************************************
+        plt.legend(frameon=False)#*****************************************************************
+        #设置坐标轴的粗细
+        ax=plt.gca();#获得坐标轴的句柄#*****************************************************************
+        ax.spines['bottom'].set_linewidth(2);###设置底部坐标轴的粗细
+        ax.spines['left'].set_linewidth(2);####设置左边坐标轴的粗细
+        ax.spines['right'].set_linewidth(2);###设置右边坐标轴的粗细
+        ax.spines['top'].set_linewidth(2);####设置上部坐标轴的粗细
+
+        # 绘制滤波后的时域图
+        plt.figure(6,dpi=600)
+        plt.plot(x, filtered_y.transpose())
+        plt.title('Filtered Time Domain Signal')
+        plt.xlabel('Time [s]',weight='bold')
+        plt.ylabel('Amplitude',weight='bold')#*****************************************************************
+        plt.legend(frameon=False)#*****************************************************************
+        #设置坐标轴的粗细
+        ax=plt.gca();#获得坐标轴的句柄#*****************************************************************
+        ax.spines['bottom'].set_linewidth(2);###设置底部坐标轴的粗细
+        ax.spines['left'].set_linewidth(2);####设置左边坐标轴的粗细
+        ax.spines['right'].set_linewidth(2);###设置右边坐标轴的粗细
+        ax.spines['top'].set_linewidth(2);####设置上部坐标轴的粗细
+    
+    plt.tight_layout()
+    plt.show()
+    
+    if cutoff_freq is not None:
+        return half_freqs, half_abs_y, filtered_y
+    else:
+        return half_freqs, half_abs_y
+
+
+
+freqs, amp_spectrum, filtered_signal = FrequencyDomainDiagram(wavelength, data, cutoff_freq=1.1)
